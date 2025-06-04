@@ -1,23 +1,8 @@
-from flask import Flask, render_template_string
+from flask import Flask, jsonify, send_from_directory
 import json
+import os
 
-app = Flask(__name__)
-
-INDEX_TMPL = """
-<!doctype html>
-<title>Fantasy Runs Challenge</title>
-<h1>Fantasy Runs Challenge</h1>
-<table border="1" cellpadding="5">
-<tr><th>Participant</th><th>Team</th><th>Runs 0-13</th></tr>
-{% for participant, team in assignments.items() %}
-  <tr>
-    <td>{{ participant }}</td>
-    <td>{{ team }}</td>
-    <td>{{ scoreboard.get(team, []) }}</td>
-  </tr>
-{% endfor %}
-</table>
-"""
+app = Flask(__name__, static_folder="frontend", static_url_path="")
 
 
 def load_data():
@@ -28,10 +13,20 @@ def load_data():
     return assignments, scoreboard
 
 
+@app.route("/api/data")
+def api_data():
+    assignments, scoreboard = load_data()
+    return jsonify({"assignments": assignments, "scoreboard": scoreboard})
+
+
 @app.route("/")
 def index():
-    assignments, scoreboard = load_data()
-    return render_template_string(INDEX_TMPL, assignments=assignments, scoreboard=scoreboard)
+    return send_from_directory(app.static_folder, "index.html")
+
+
+@app.route("/<path:path>")
+def static_proxy(path):
+    return send_from_directory(app.static_folder, path)
 
 
 if __name__ == "__main__":

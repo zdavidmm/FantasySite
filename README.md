@@ -3,6 +3,8 @@
 This repository contains a simple fantasy baseball challenge site that helps run
 a "runs 0–13" competition. Participants are randomly assigned MLB teams and the
 site tracks which run totals each team achieves throughout the season.
+The user interface is built with React and styled with a dark theme reminiscent
+of DraftKings.
 
 ## Setup
 
@@ -33,8 +35,9 @@ site tracks which run totals each team achieves throughout the season.
    ```bash
    python app.py
    ```
-   Visit `http://localhost:5000` in a browser to view each participant, their
-   assigned team and the list of run totals that team has scored so far.
+   Visit `http://localhost:5000` to view the React interface. The app fetches
+   the assignment and scoreboard data from `/api/data` and displays a table in
+   a dark theme inspired by DraftKings.
 
 The ultimate goal is for a team to record every run total from 0 through 13.
 The sample rules in the project description award prizes for milestones such as
