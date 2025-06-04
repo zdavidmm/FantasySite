@@ -1,4 +1,6 @@
 import json
+import logging
+import os
 import random
 import sys
 
@@ -36,31 +38,43 @@ TEAMS = [
 ]
 
 
+PARTICIPANTS_FILE = os.environ.get("PARTICIPANTS_FILE", "participants.json")
+SCOREBOARD_FILE = os.environ.get("SCOREBOARD_FILE", "scoreboard.json")
+
+logger = logging.getLogger(__name__)
+
+
 def main(participants_file: str):
+    logger.debug("Reading participants from %s", participants_file)
     with open(participants_file) as f:
         participants = [line.strip() for line in f if line.strip()]
 
     if len(participants) != 30:
+        logger.error("Expected 30 participants but got %d", len(participants))
         raise SystemExit("Exactly 30 participants are required")
 
     random.shuffle(TEAMS)
+    logger.debug("Teams after shuffle: %s", TEAMS)
 
     assignments = dict(zip(participants, TEAMS))
 
     # Save participant assignments
-    with open("participants.json", "w") as f:
+    logger.debug("Writing assignments to %s", PARTICIPANTS_FILE)
+    with open(PARTICIPANTS_FILE, "w") as f:
         json.dump(assignments, f, indent=2)
 
     # Initialize scoreboard
     scoreboard = {team: [] for team in TEAMS}
-    with open("scoreboard.json", "w") as f:
+    logger.debug("Initializing scoreboard in %s", SCOREBOARD_FILE)
+    with open(SCOREBOARD_FILE, "w") as f:
         json.dump(scoreboard, f, indent=2)
 
-    print("Draft complete. Assignments written to participants.json")
+    logger.info("Draft complete. Assignments written to %s", PARTICIPANTS_FILE)
 
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Usage: python draft.py PARTICIPANTS_FILE")
         sys.exit(1)
+    logging.basicConfig(level=logging.DEBUG if os.environ.get("LOG_LEVEL") == "DEBUG" else logging.INFO)
     main(sys.argv[1])

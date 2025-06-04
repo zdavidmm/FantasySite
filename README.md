@@ -42,3 +42,28 @@ of DraftKings.
 The ultimate goal is for a team to record every run total from 0 through 13.
 The sample rules in the project description award prizes for milestones such as
 first team to 13 runs, first team to complete all totals, and so on.
+
+## Testing
+
+Automated tests are provided using `pytest`.
+
+1. Install the dependencies (including `pytest`):
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. Run the test suite:
+   ```bash
+   pytest -v
+   ```
+
+To see detailed debug output while running any of the scripts, set the
+`LOG_LEVEL` environment variable to `DEBUG`:
+
+```bash
+LOG_LEVEL=DEBUG python update_scores.py
+```
+
+`draft.py`, `update_scores.py` and `app.py` also respect the optional
+`SCOREBOARD_FILE` and `PARTICIPANTS_FILE` environment variables which can be
+used to override the default file locations when troubleshooting.
