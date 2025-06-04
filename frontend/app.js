@@ -13,6 +13,16 @@ function App() {
 
   const { assignments, scoreboard } = data;
 
+  const RUN_TOTALS = Array.from({ length: 14 }, (_, i) => i);
+
+  const rows = Object.entries(assignments)
+    .map(([participant, team]) => ({
+      participant,
+      team,
+      achieved: scoreboard[team] || [],
+    }))
+    .sort((a, b) => b.achieved.length - a.achieved.length);
+
   return (
     <div className="container">
       <h1>Fantasy Runs Challenge</h1>
@@ -21,15 +31,21 @@ function App() {
           <tr>
             <th>Participant</th>
             <th>Team</th>
-            <th>Runs 0-13</th>
+            {RUN_TOTALS.map((n) => (
+              <th key={n} className="center">{n}</th>
+            ))}
           </tr>
         </thead>
         <tbody>
-          {Object.entries(assignments).map(([participant, team]) => (
-            <tr key={participant}>
-              <td>{participant}</td>
-              <td>{team}</td>
-              <td>{(scoreboard[team] || []).join(', ')}</td>
+          {rows.map((row) => (
+            <tr key={row.participant}>
+              <td>{row.participant}</td>
+              <td>{row.team}</td>
+              {RUN_TOTALS.map((n) => (
+                <td key={n} className="center">
+                  {row.achieved.includes(n) ? '✓' : ''}
+                </td>
+              ))}
             </tr>
           ))}
         </tbody>

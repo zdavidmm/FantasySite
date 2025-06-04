@@ -28,6 +28,10 @@ th, td {
   border-bottom: 1px solid #444;
 }
 
+.center {
+  text-align: center;
+}
+
 th {
   background-color: #1b1e24;
   color: #5cb85c;

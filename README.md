@@ -36,8 +36,9 @@ of DraftKings.
    python app.py
    ```
    Visit `http://localhost:5000` to view the React interface. The app fetches
-   the assignment and scoreboard data from `/api/data` and displays a table in
-   a dark theme inspired by DraftKings.
+   the assignment and scoreboard data from `/api/data`. Participants are sorted
+   by progress and the table now shows a column for each run total from 0 to 13
+   with a check mark when a team has achieved that number of runs.
 
 The ultimate goal is for a team to record every run total from 0 through 13.
 The sample rules in the project description award prizes for milestones such as
