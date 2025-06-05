@@ -3,6 +3,7 @@ from types import SimpleNamespace
 import sys
 from pathlib import Path
 import datetime
+import sqlite3
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
@@ -10,10 +11,14 @@ import update_scores
 
 
 def test_update_for_date(monkeypatch, tmp_path):
-    scoreboard_file = tmp_path / "scoreboard.json"
-    scoreboard_file.write_text(json.dumps({"Test Team": {}}))
-    monkeypatch.setenv("SCOREBOARD_FILE", str(scoreboard_file))
-    update_scores.SCOREBOARD_FILE = str(scoreboard_file)
+    db_file = tmp_path / "scores.db"
+    monkeypatch.setenv("DB_FILE", str(db_file))
+    update_scores.DB_FILE = str(db_file)
+    conn = sqlite3.connect(db_file)
+    update_scores.db.init_db(conn)
+    conn.execute("INSERT INTO participants (participant, team) VALUES ('P1', 'Test Team')")
+    conn.commit()
+    conn.close()
 
     sample_games = [{
         "gamePk": 1,
@@ -37,16 +42,21 @@ def test_update_for_date(monkeypatch, tmp_path):
 
     update_scores.update_for_date("2022-01-01")
 
-    data = json.loads(scoreboard_file.read_text())
-    assert data["Test Team"]["5"]["date"] == "2022-01-01"
-    assert data["Test Team"]["5"]["game_pk"] == 1
+    conn = sqlite3.connect(db_file)
+    row = conn.execute("SELECT date, game_pk FROM scoreboard WHERE team='Test Team' AND run_total=5").fetchone()
+    assert row[0] == "2022-01-01"
+    assert row[1] == 1
 
 
 def test_update_since(monkeypatch, tmp_path):
-    scoreboard_file = tmp_path / "scoreboard.json"
-    scoreboard_file.write_text(json.dumps({"Test Team": {}}))
-    monkeypatch.setenv("SCOREBOARD_FILE", str(scoreboard_file))
-    update_scores.SCOREBOARD_FILE = str(scoreboard_file)
+    db_file = tmp_path / "scores.db"
+    monkeypatch.setenv("DB_FILE", str(db_file))
+    update_scores.DB_FILE = str(db_file)
+    conn = sqlite3.connect(db_file)
+    update_scores.db.init_db(conn)
+    conn.execute("INSERT INTO participants (participant, team) VALUES ('P1', 'Test Team')")
+    conn.commit()
+    conn.close()
 
     day1 = [{
         "gamePk": 1,
@@ -86,10 +96,12 @@ def test_update_since(monkeypatch, tmp_path):
 
     update_scores.update_since("2022-01-01")
 
-    data = json.loads(scoreboard_file.read_text())
-    assert set(data["Test Team"].keys()) == {"5", "7"}
-    assert data["Test Team"]["5"]["date"] == "2022-01-01"
-    assert data["Test Team"]["7"]["game_pk"] == 2
+    conn = sqlite3.connect(db_file)
+    rows = conn.execute("SELECT run_total, date, game_pk FROM scoreboard WHERE team='Test Team'").fetchall()
+    totals = {r[0]: r[1:] for r in rows}
+    assert set(totals.keys()) == {5, 7}
+    assert totals[5][0] == "2022-01-01"
+    assert totals[7][1] == 2
 
 
 def test_main_uses_opening_day(monkeypatch):
