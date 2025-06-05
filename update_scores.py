@@ -16,13 +16,13 @@ OPENING_DAY = "2025-03-27"
 logger = logging.getLogger(__name__)
 
 
-def load_scoreboard() -> Dict[str, list]:
+def load_scoreboard() -> Dict[str, dict]:
     logger.debug("Loading scoreboard from %s", SCOREBOARD_FILE)
     with open(SCOREBOARD_FILE) as f:
         return json.load(f)
 
 
-def save_scoreboard(scoreboard: Dict[str, list]):
+def save_scoreboard(scoreboard: Dict[str, dict]):
     logger.debug("Saving scoreboard to %s", SCOREBOARD_FILE)
     with open(SCOREBOARD_FILE, "w") as f:
         json.dump(scoreboard, f, indent=2)
@@ -43,7 +43,7 @@ def fetch_games(date: str) -> list:
     return games
 
 
-def update_for_date(date: str, scoreboard: Dict[str, list] | None = None) -> Dict[str, list]:
+def update_for_date(date: str, scoreboard: Dict[str, dict] | None = None) -> Dict[str, dict]:
     """Update the scoreboard for a single date.
 
     If *scoreboard* is provided it will be updated in place and **not** saved to
@@ -57,6 +57,7 @@ def update_for_date(date: str, scoreboard: Dict[str, list] | None = None) -> Dic
         save_after = True
 
     for game in games:
+        game_pk = game.get("gamePk")
         for side in ["home", "away"]:
             team = game["teams"][side]["team"]["name"]
             team_data = game["teams"][side]
@@ -67,10 +68,13 @@ def update_for_date(date: str, scoreboard: Dict[str, list] | None = None) -> Dic
             if team not in scoreboard:
                 logger.debug("Skipping untracked team %s", team)
                 continue
-            if runs not in scoreboard[team]:
+            run_key = str(runs)
+            if run_key not in scoreboard[team]:
                 logger.debug("Adding run total %s for %s", runs, team)
-                scoreboard[team].append(runs)
-                scoreboard[team].sort()
+                scoreboard[team][run_key] = {
+                    "date": date,
+                    "game_pk": game_pk,
+                }
 
     if save_after:
         save_scoreboard(scoreboard)

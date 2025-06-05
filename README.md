@@ -17,7 +17,9 @@ of DraftKings.
    must be exactly 30 participants.
 
 3. Run the draft to assign each participant a random team and initialize the
-   scoreboard:
+   scoreboard. The scoreboard now stores a dictionary for each team where each
+   run total maps to a record containing the date and MLB game id when that
+   total was first achieved:
    ```bash
    python draft.py participants.txt
    ```
@@ -38,7 +40,8 @@ of DraftKings.
    Visit `http://localhost:5000` to view the React interface. The app fetches
    the assignment and scoreboard data from `/api/data`. Participants are sorted
    by progress and the table now shows a column for each run total from 0 to 13
-   with a check mark when a team has achieved that number of runs.
+   with a check mark. Under each check mark is the date of the qualifying game
+   linked to the official MLB gamelog.
 
 The ultimate goal is for a team to record every run total from 0 through 13.
 The sample rules in the project description award prizes for milestones such as
