@@ -4,6 +4,8 @@ import os
 import random
 import sys
 
+import db
+
 TEAMS = [
     "Arizona Diamondbacks",
     "Atlanta Braves",
@@ -40,6 +42,7 @@ TEAMS = [
 
 PARTICIPANTS_FILE = os.environ.get("PARTICIPANTS_FILE", "participants.json")
 SCOREBOARD_FILE = os.environ.get("SCOREBOARD_FILE", "scoreboard.json")
+DB_FILE = os.environ.get("DB_FILE", db.DB_FILE)
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +72,14 @@ def main(participants_file: str):
     logger.debug("Initializing scoreboard in %s", SCOREBOARD_FILE)
     with open(SCOREBOARD_FILE, "w") as f:
         json.dump(scoreboard, f, indent=2)
+
+    # Initialize database
+    conn = db.connect(DB_FILE)
+    db.init_db(conn)
+    db.save_assignments(assignments, conn)
+    conn.execute("DELETE FROM scoreboard")
+    conn.commit()
+    conn.close()
 
     logger.info("Draft complete. Assignments written to %s", PARTICIPANTS_FILE)
 

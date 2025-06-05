@@ -17,21 +17,21 @@ of DraftKings.
    must be exactly 30 participants.
 
 3. Run the draft to assign each participant a random team and initialize the
-   scoreboard. The scoreboard now stores a dictionary for each team where each
-   run total maps to a record containing the date and MLB game id when that
-   total was first achieved:
+   scoreboard database. The database stores the participant assignments and will
+   track the first date and MLB game id for every run total achieved by each
+   team:
    ```bash
    python draft.py participants.txt
    ```
 
-4. Each day, update the scoreboard with the previous day's results (or pass a
-   date in `YYYY-MM-DD` format to fetch another day):
+4. Each day, update the scoreboard database with the previous day's results (or
+   pass a date in `YYYY-MM-DD` format to fetch another day):
    ```bash
    python update_scores.py            # uses yesterday's date
    python update_scores.py 2025-04-01 # specific date
    ```
-   The script pulls scores from the official MLB schedule API and updates
-   `scoreboard.json` accordingly.
+   The script pulls scores from the official MLB schedule API and updates the
+   SQLite database accordingly.
 
 5. Launch the local web site:
    ```bash
@@ -69,5 +69,5 @@ LOG_LEVEL=DEBUG python update_scores.py
 ```
 
 `draft.py`, `update_scores.py` and `app.py` also respect the optional
-`SCOREBOARD_FILE` and `PARTICIPANTS_FILE` environment variables which can be
-used to override the default file locations when troubleshooting.
+`DB_FILE`, `SCOREBOARD_FILE` and `PARTICIPANTS_FILE` environment variables which
+can be used to override the default file locations when troubleshooting.

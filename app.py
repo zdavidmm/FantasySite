@@ -2,22 +2,24 @@ from flask import Flask, jsonify, send_from_directory
 import json
 import logging
 import os
+import db
 
 app = Flask(__name__, static_folder="frontend", static_url_path="")
 
 PARTICIPANTS_FILE = os.environ.get("PARTICIPANTS_FILE", "participants.json")
 SCOREBOARD_FILE = os.environ.get("SCOREBOARD_FILE", "scoreboard.json")
+DB_FILE = os.environ.get("DB_FILE", db.DB_FILE)
 
 logger = logging.getLogger(__name__)
 
 
 def load_data():
-    logger.debug("Loading participants from %s", PARTICIPANTS_FILE)
-    with open(PARTICIPANTS_FILE) as f:
-        assignments = json.load(f)
-    logger.debug("Loading scoreboard from %s", SCOREBOARD_FILE)
-    with open(SCOREBOARD_FILE) as f:
-        scoreboard = json.load(f)
+    logger.debug("Loading data from database %s", DB_FILE)
+    conn = db.connect(DB_FILE)
+    db.init_db(conn)
+    assignments = db.get_assignments(conn)
+    scoreboard = db.load_scoreboard(conn)
+    conn.close()
     return assignments, scoreboard
 
 

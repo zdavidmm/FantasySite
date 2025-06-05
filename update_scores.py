@@ -1,14 +1,15 @@
 import datetime
-import json
 import logging
 import os
 import sys
 from typing import Dict
+import sqlite3
 
 import requests
+import db
 
 SCHEDULE_URL = "https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={date}"
-SCOREBOARD_FILE = os.environ.get("SCOREBOARD_FILE", "scoreboard.json")
+DB_FILE = os.environ.get("DB_FILE", db.DB_FILE)
 
 # Opening Day for the season. Used when no start date is supplied.
 OPENING_DAY = "2025-03-27"
@@ -16,16 +17,16 @@ OPENING_DAY = "2025-03-27"
 logger = logging.getLogger(__name__)
 
 
-def load_scoreboard() -> Dict[str, dict]:
-    logger.debug("Loading scoreboard from %s", SCOREBOARD_FILE)
-    with open(SCOREBOARD_FILE) as f:
-        return json.load(f)
+def load_scoreboard(conn=None) -> Dict[str, dict]:
+    if conn is None:
+        conn = db.connect(DB_FILE)
+    logger.debug("Loading scoreboard from database %s", DB_FILE)
+    db.init_db(conn)
+    return db.load_scoreboard(conn)
 
 
-def save_scoreboard(scoreboard: Dict[str, dict]):
-    logger.debug("Saving scoreboard to %s", SCOREBOARD_FILE)
-    with open(SCOREBOARD_FILE, "w") as f:
-        json.dump(scoreboard, f, indent=2)
+def save_run(conn: sqlite3.Connection, team: str, run_total: int, date: str, game_pk: int):
+    db.record_run(conn, team, run_total, date, game_pk)
 
 
 def fetch_games(date: str) -> list:
@@ -43,18 +44,23 @@ def fetch_games(date: str) -> list:
     return games
 
 
-def update_for_date(date: str, scoreboard: Dict[str, dict] | None = None) -> Dict[str, dict]:
+def update_for_date(
+    date: str, scoreboard: Dict[str, dict] | None = None, conn: sqlite3.Connection | None = None
+) -> Dict[str, dict]:
     """Update the scoreboard for a single date.
 
-    If *scoreboard* is provided it will be updated in place and **not** saved to
-    disk. Otherwise the scoreboard file is loaded and written back out.
+    If *scoreboard* is provided it will be updated in place and returned. When
+    *conn* is ``None`` a new connection is opened and closed automatically.
     """
     logger.debug("Updating scores for %s", date)
     games = fetch_games(date)
-    save_after = False
+    close_conn = False
+    if conn is None:
+        conn = db.connect(DB_FILE)
+        close_conn = True
+    db.init_db(conn)
     if scoreboard is None:
-        scoreboard = load_scoreboard()
-        save_after = True
+        scoreboard = db.load_scoreboard(conn)
 
     for game in games:
         game_pk = game.get("gamePk")
@@ -66,8 +72,7 @@ def update_for_date(date: str, scoreboard: Dict[str, dict] | None = None) -> Dic
                 continue
             runs = team_data["score"]
             if team not in scoreboard:
-                logger.debug("Skipping untracked team %s", team)
-                continue
+                scoreboard[team] = {}
             run_key = str(runs)
             if run_key not in scoreboard[team]:
                 logger.debug("Adding run total %s for %s", runs, team)
@@ -75,9 +80,10 @@ def update_for_date(date: str, scoreboard: Dict[str, dict] | None = None) -> Dic
                     "date": date,
                     "game_pk": game_pk,
                 }
+                save_run(conn, team, runs, date, game_pk)
 
-    if save_after:
-        save_scoreboard(scoreboard)
+    if close_conn:
+        conn.close()
         print(f"Updated scores for {date}")
 
     return scoreboard
@@ -88,11 +94,13 @@ def update_since(start_date: str):
     logger.debug("Updating scores since %s", start_date)
     current = datetime.date.fromisoformat(start_date)
     end_date = datetime.date.today() - datetime.timedelta(days=1)
-    scoreboard = load_scoreboard()
+    conn = db.connect(DB_FILE)
+    db.init_db(conn)
+    scoreboard = db.load_scoreboard(conn)
     while current <= end_date:
-        update_for_date(current.isoformat(), scoreboard)
+        update_for_date(current.isoformat(), scoreboard, conn)
         current += datetime.timedelta(days=1)
-    save_scoreboard(scoreboard)
+    conn.close()
     print(f"Updated scores for {start_date} through {end_date.isoformat()}")
 
 
