@@ -10,6 +10,9 @@ import requests
 SCHEDULE_URL = "https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={date}"
 SCOREBOARD_FILE = os.environ.get("SCOREBOARD_FILE", "scoreboard.json")
 
+# Opening Day for the season. Used when no start date is supplied.
+OPENING_DAY = "2024-03-28"
+
 logger = logging.getLogger(__name__)
 
 
@@ -36,10 +39,18 @@ def fetch_games(date: str) -> list:
     return games
 
 
-def update_for_date(date: str):
+def update_for_date(date: str, scoreboard: Dict[str, list] | None = None) -> Dict[str, list]:
+    """Update the scoreboard for a single date.
+
+    If *scoreboard* is provided it will be updated in place and **not** saved to
+    disk. Otherwise the scoreboard file is loaded and written back out.
+    """
     logger.debug("Updating scores for %s", date)
     games = fetch_games(date)
-    scoreboard = load_scoreboard()
+    save_after = False
+    if scoreboard is None:
+        scoreboard = load_scoreboard()
+        save_after = True
 
     for game in games:
         for side in ["home", "away"]:
@@ -53,17 +64,33 @@ def update_for_date(date: str):
                 scoreboard[team].append(runs)
                 scoreboard[team].sort()
 
+    if save_after:
+        save_scoreboard(scoreboard)
+        print(f"Updated scores for {date}")
+
+    return scoreboard
+
+
+def update_since(start_date: str):
+    """Update scores for every day from *start_date* through yesterday."""
+    logger.debug("Updating scores since %s", start_date)
+    current = datetime.date.fromisoformat(start_date)
+    end_date = datetime.date.today() - datetime.timedelta(days=1)
+    scoreboard = load_scoreboard()
+    while current <= end_date:
+        update_for_date(current.isoformat(), scoreboard)
+        current += datetime.timedelta(days=1)
     save_scoreboard(scoreboard)
-    print(f"Updated scores for {date}")
+    print(f"Updated scores for {start_date} through {end_date.isoformat()}")
 
 
 def main():
     logging.basicConfig(level=logging.DEBUG if os.environ.get("LOG_LEVEL") == "DEBUG" else logging.INFO)
     if len(sys.argv) > 1:
-        date = sys.argv[1]
+        start_date = sys.argv[1]
     else:
-        date = (datetime.date.today() - datetime.timedelta(days=1)).isoformat()
-    update_for_date(date)
+        start_date = OPENING_DAY
+    update_since(start_date)
 
 
 if __name__ == "__main__":
