@@ -27,4 +27,4 @@ def test_draft_creates_files(monkeypatch, tmp_path):
     data = json.loads(scoreboard_file.read_text())
     assert len(data) == len(draft.TEAMS)
     for scores in data.values():
-        assert scores == []
+        assert scores == {}

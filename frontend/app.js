@@ -19,9 +19,11 @@ function App() {
     .map(([participant, team]) => ({
       participant,
       team,
-      achieved: scoreboard[team] || [],
+      achieved: scoreboard[team] || {},
     }))
-    .sort((a, b) => b.achieved.length - a.achieved.length);
+    .sort((a, b) =>
+      Object.keys(b.achieved).length - Object.keys(a.achieved).length
+    );
 
   return (
     <div className="container">
@@ -41,11 +43,23 @@ function App() {
             <tr key={row.participant}>
               <td>{row.participant}</td>
               <td>{row.team}</td>
-              {RUN_TOTALS.map((n) => (
-                <td key={n} className="center">
-                  {row.achieved.includes(n) ? '✓' : ''}
-                </td>
-              ))}
+              {RUN_TOTALS.map((n) => {
+                const info = row.achieved[n];
+                if (!info) {
+                  return <td key={n} className="center"></td>;
+                }
+                const link = `https://www.mlb.com/gameday/${info.game_pk}`;
+                return (
+                  <td key={n} className="center">
+                    <div className="mark">
+                      <span className="check">✓</span>
+                      <a href={link} target="_blank" rel="noopener noreferrer">
+                        {info.date}
+                      </a>
+                    </div>
+                  </td>
+                );
+              })}
             </tr>
           ))}
         </tbody>

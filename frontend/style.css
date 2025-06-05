@@ -1,5 +1,5 @@
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   margin: 0;
   padding: 0;
   background-color: #0f1319;
@@ -40,6 +40,31 @@ th {
 
 tr:nth-child(even) {
   background-color: #1b1e24;
+}
+
+tr:hover {
+  background-color: #2a2e36;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.mark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.mark a {
+  color: #5cb85c;
+  text-decoration: none;
+  font-size: 0.75em;
+}
+
+.mark a:hover {
+  text-decoration: underline;
+}
+
+.check {
+  font-size: 1.2em;
 }
 
 .loading {

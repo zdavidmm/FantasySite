@@ -63,8 +63,9 @@ def main(participants_file: str):
     with open(PARTICIPANTS_FILE, "w") as f:
         json.dump(assignments, f, indent=2)
 
-    # Initialize scoreboard
-    scoreboard = {team: [] for team in TEAMS}
+    # Initialize scoreboard with an empty dict for each team. Each run total
+    # will map to a metadata dictionary (date and game_pk) when achieved.
+    scoreboard = {team: {} for team in TEAMS}
     logger.debug("Initializing scoreboard in %s", SCOREBOARD_FILE)
     with open(SCOREBOARD_FILE, "w") as f:
         json.dump(scoreboard, f, indent=2)

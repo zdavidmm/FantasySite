@@ -11,11 +11,12 @@ import update_scores
 
 def test_update_for_date(monkeypatch, tmp_path):
     scoreboard_file = tmp_path / "scoreboard.json"
-    scoreboard_file.write_text(json.dumps({"Test Team": []}))
+    scoreboard_file.write_text(json.dumps({"Test Team": {}}))
     monkeypatch.setenv("SCOREBOARD_FILE", str(scoreboard_file))
     update_scores.SCOREBOARD_FILE = str(scoreboard_file)
 
     sample_games = [{
+        "gamePk": 1,
         "teams": {
             "home": {"team": {"name": "Test Team"}, "score": 5},
             "away": {"team": {"name": "Other"}, "score": 3}
@@ -37,22 +38,25 @@ def test_update_for_date(monkeypatch, tmp_path):
     update_scores.update_for_date("2022-01-01")
 
     data = json.loads(scoreboard_file.read_text())
-    assert data["Test Team"] == [5]
+    assert data["Test Team"]["5"]["date"] == "2022-01-01"
+    assert data["Test Team"]["5"]["game_pk"] == 1
 
 
 def test_update_since(monkeypatch, tmp_path):
     scoreboard_file = tmp_path / "scoreboard.json"
-    scoreboard_file.write_text(json.dumps({"Test Team": []}))
+    scoreboard_file.write_text(json.dumps({"Test Team": {}}))
     monkeypatch.setenv("SCOREBOARD_FILE", str(scoreboard_file))
     update_scores.SCOREBOARD_FILE = str(scoreboard_file)
 
     day1 = [{
+        "gamePk": 1,
         "teams": {
             "home": {"team": {"name": "Test Team"}, "score": 5},
             "away": {"team": {"name": "Other"}, "score": 3}
         }
     }]
     day2 = [{
+        "gamePk": 2,
         "teams": {
             "home": {"team": {"name": "Test Team"}, "score": 7},
             "away": {"team": {"name": "Other"}, "score": 2}
@@ -83,7 +87,9 @@ def test_update_since(monkeypatch, tmp_path):
     update_scores.update_since("2022-01-01")
 
     data = json.loads(scoreboard_file.read_text())
-    assert data["Test Team"] == [5, 7]
+    assert set(data["Test Team"].keys()) == {"5", "7"}
+    assert data["Test Team"]["5"]["date"] == "2022-01-01"
+    assert data["Test Team"]["7"]["game_pk"] == 2
 
 
 def test_main_uses_opening_day(monkeypatch):
