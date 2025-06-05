@@ -11,7 +11,7 @@ SCHEDULE_URL = "https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={date}"
 SCOREBOARD_FILE = os.environ.get("SCOREBOARD_FILE", "scoreboard.json")
 
 # Opening Day for the season. Used when no start date is supplied.
-OPENING_DAY = "2024-03-28"
+OPENING_DAY = "2025-03-27"
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,11 @@ def fetch_games(date: str) -> list:
     response = requests.get(url, timeout=30)
     response.raise_for_status()
     data = response.json()
-    games = data.get("dates", [{}])[0].get("games", [])
+    dates = data.get("dates", [])
+    if not dates:
+        logger.debug("No games found for %s", date)
+        return []
+    games = dates[0].get("games", [])
     logger.debug("Fetched %d games", len(games))
     return games
 
@@ -55,7 +59,11 @@ def update_for_date(date: str, scoreboard: Dict[str, list] | None = None) -> Dic
     for game in games:
         for side in ["home", "away"]:
             team = game["teams"][side]["team"]["name"]
-            runs = game["teams"][side]["score"]
+            team_data = game["teams"][side]
+            if "score" not in team_data:
+                # Skip if this game has no score yet (e.g., not started)
+                continue
+            runs = team_data["score"]
             if team not in scoreboard:
                 logger.debug("Skipping untracked team %s", team)
                 continue
