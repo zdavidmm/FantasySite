@@ -79,7 +79,11 @@ This repo deploys the frontend to GitHub Pages with GitHub Actions.
   - manual `workflow_dispatch`
 - The workflow updates score data, exports static JSON for the frontend, and
   deploys the `frontend/` artifact.
-- The site header includes a \"Last updated\" note and the daily refresh time.
+- Participant seed priority in CI:
+  - `participants.json` (preferred)
+  - `participants.txt` (must contain 30 names)
+  - fallback: MLB team names used as participant labels
+- The site header includes a "Last updated" note and the daily refresh time.
 
 The ultimate goal is for a team to record every run total from 0 through 13.
 The sample rules in the project description award prizes for milestones such as
