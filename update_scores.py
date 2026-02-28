@@ -1,23 +1,24 @@
 import datetime
 import logging
 import os
-import sys
-from typing import Dict
 import sqlite3
+import sys
+from typing import Dict, Optional
 
-import requests
 import db
+import requests
 
 SCHEDULE_URL = "https://statsapi.mlb.com/api/v1/schedule?sportId=1&date={date}"
 DB_FILE = os.environ.get("DB_FILE", db.DB_FILE)
 
 # Opening Day for the season. Used when no start date is supplied.
-OPENING_DAY = "2025-03-27"
+# Override with OPENING_DAY env var to avoid hardcoding each year.
+OPENING_DAY = os.environ.get("OPENING_DAY", "2026-03-26")
 
 logger = logging.getLogger(__name__)
 
 
-def load_scoreboard(conn=None) -> Dict[str, dict]:
+def load_scoreboard(conn: Optional[sqlite3.Connection] = None) -> Dict[str, dict]:
     if conn is None:
         conn = db.connect(DB_FILE)
     logger.debug("Loading scoreboard from database %s", DB_FILE)
@@ -45,7 +46,9 @@ def fetch_games(date: str) -> list:
 
 
 def update_for_date(
-    date: str, scoreboard: Dict[str, dict] | None = None, conn: sqlite3.Connection | None = None
+    date: str,
+    scoreboard: Optional[Dict[str, dict]] = None,
+    conn: Optional[sqlite3.Connection] = None,
 ) -> Dict[str, dict]:
     """Update the scoreboard for a single date.
 

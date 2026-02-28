@@ -1,0 +1,9 @@
+# ignore the local scoreboard file
+scoreboard.json
+
+# ignore generated participant files
+participants.json
+participants.txt
+
+# local frontend dependencies
+node_modules/

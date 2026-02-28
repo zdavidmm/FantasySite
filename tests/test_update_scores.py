@@ -1,8 +1,8 @@
-import json
 from types import SimpleNamespace
 import sys
 from pathlib import Path
 import datetime
+import importlib
 import sqlite3
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
@@ -124,3 +124,12 @@ def test_main_uses_opening_day(monkeypatch):
     update_scores.main()
 
     assert called["start"] == "2022-03-31"
+
+
+def test_opening_day_can_be_overridden_by_env_on_reload(monkeypatch):
+    monkeypatch.setenv("OPENING_DAY", "2027-03-31")
+    importlib.reload(update_scores)
+    assert update_scores.OPENING_DAY == "2027-03-31"
+
+    monkeypatch.delenv("OPENING_DAY", raising=False)
+    importlib.reload(update_scores)

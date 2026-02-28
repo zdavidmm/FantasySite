@@ -1,11 +1,11 @@
 import os
 import sqlite3
-from typing import Dict
+from typing import Dict, Optional
 
 DB_FILE = os.environ.get("DB_FILE", "fantasy.db")
 
 
-def connect(db_file: str | None = None):
+def connect(db_file: Optional[str] = None):
     """Return a SQLite connection to the database."""
     if db_file is None:
         db_file = DB_FILE

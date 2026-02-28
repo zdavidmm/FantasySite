@@ -1,0 +1,89 @@
+name: Deploy Site
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Seed participant assignments into DB
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import db
+
+          db_file = os.environ.get("DB_FILE", db.DB_FILE)
+          conn = db.connect(db_file)
+          db.init_db(conn)
+          with open("participants.json") as f:
+              assignments = json.load(f)
+          conn.execute("DELETE FROM participants")
+          conn.executemany(
+              "INSERT INTO participants (participant, team) VALUES (?, ?)",
+              list(assignments.items()),
+          )
+          conn.commit()
+          conn.close()
+          PY
+
+      - name: Update scoreboard data
+        run: python update_scores.py
+
+      - name: Export DB data for static site
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import db
+
+          db_file = os.environ.get("DB_FILE", db.DB_FILE)
+          conn = db.connect(db_file)
+          db.init_db(conn)
+          assignments = db.get_assignments(conn)
+          scoreboard = db.load_scoreboard(conn)
+          conn.close()
+
+          with open("frontend/participants.json", "w") as f:
+              json.dump(assignments, f, indent=2)
+          with open("frontend/scoreboard.json", "w") as f:
+              json.dump(scoreboard, f, indent=2)
+          PY
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

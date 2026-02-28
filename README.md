@@ -1,16 +1,16 @@
 # Fantasy Site
 
-This repository contains a simple fantasy baseball challenge site that helps run
+This repository contains a fantasy baseball challenge site that helps run
 a "runs 0–13" competition. Participants are randomly assigned MLB teams and the
 site tracks which run totals each team achieves throughout the season.
-The user interface is built with React and styled with a dark theme reminiscent
-of DraftKings.
+The user interface is built with React and a responsive dark product-style
+layout.
 
 ## Setup
 
 1. Install dependencies:
    ```bash
-   pip install -r requirements.txt
+   pip3 install -r requirements.txt
    ```
 
 2. Prepare a `participants.txt` file with one participant name per line. There
@@ -21,27 +21,65 @@ of DraftKings.
    track the first date and MLB game id for every run total achieved by each
    team:
    ```bash
-   python draft.py participants.txt
+   python3 draft.py participants.txt
    ```
 
-4. Each day, update the scoreboard database with the previous day's results (or
-   pass a date in `YYYY-MM-DD` format to fetch another day):
+4. At the start of a new season, choose one reset mode:
+   - Keep existing participant/team assignments and clear progress only:
+     ```bash
+     python3 - <<'PY'
+     import os
+     import sqlite3
+
+     db_file = os.environ.get("DB_FILE", "fantasy.db")
+     conn = sqlite3.connect(db_file)
+     conn.execute("DELETE FROM scoreboard")
+     conn.commit()
+     conn.close()
+     print(f"scoreboard reset in {db_file}")
+     PY
+     ```
+   - Re-run a full draft (new team assignments + fresh scoreboard):
+     ```bash
+     python3 draft.py participants.txt
+     ```
+
+5. Update scores daily. `update_scores.py` defaults to the 2026 Opening Day
+   (`2026-03-26`) unless overridden by `OPENING_DAY`:
    ```bash
-   python update_scores.py            # uses yesterday's date
-   python update_scores.py 2025-04-01 # specific date
+   python3 update_scores.py             # uses default OPENING_DAY through yesterday
+   python3 update_scores.py 2026-03-26  # specific start date
+   OPENING_DAY=2027-04-01 python3 update_scores.py
    ```
    The script pulls scores from the official MLB schedule API and updates the
    SQLite database accordingly.
 
-5. Launch the local web site:
+6. Launch the local web site:
    ```bash
-   python app.py
+   python3 app.py
    ```
    Visit `http://localhost:5000` to view the React interface. The app fetches
-   the assignment and scoreboard data from `/api/data`. Participants are sorted
-   by progress and the table now shows a column for each run total from 0 to 13
-   with a check mark. Under each check mark is the date of the qualifying game
-   linked to the official MLB gamelog.
+   the assignment and scoreboard data from `/api/data` and includes:
+   - responsive dark-themed leaderboard layout
+   - participant search
+   - sort controls (default: progress descending, then name ascending)
+   - optional "Only Missing Totals" filter toggle
+   - sticky table header with horizontal scroll on smaller screens
+   - progress shown as both text (`X/14`) and a compact progress bar
+   - run-total cells with metadata tooltips and links to MLB gameday when
+     `game_pk` exists
+
+## GitHub Pages
+
+This repo deploys the frontend to GitHub Pages with GitHub Actions.
+
+- Triggered on:
+  - push to `main`
+  - daily schedule at `6:00 AM UTC`
+  - manual `workflow_dispatch`
+- The workflow updates score data, exports static JSON for the frontend, and
+  deploys the `frontend/` artifact.
+- The site header includes a \"Last updated\" note and the daily refresh time.
 
 The ultimate goal is for a team to record every run total from 0 through 13.
 The sample rules in the project description award prizes for milestones such as
@@ -49,25 +87,32 @@ first team to 13 runs, first team to complete all totals, and so on.
 
 ## Testing
 
-Automated tests are provided using `pytest`.
+Automated tests are provided for both Python and frontend logic.
 
 1. Install the dependencies (including `pytest`):
    ```bash
-   pip install -r requirements.txt
+   pip3 install -r requirements.txt
    ```
 
-2. Run the test suite:
+2. Run the Python test suite:
    ```bash
-   pytest -v
+   python3 -m pytest -v
+   ```
+
+3. Run frontend unit/component tests:
+   ```bash
+   npm install
+   npm run test:frontend
    ```
 
 To see detailed debug output while running any of the scripts, set the
 `LOG_LEVEL` environment variable to `DEBUG`:
 
 ```bash
-LOG_LEVEL=DEBUG python update_scores.py
+LOG_LEVEL=DEBUG python3 update_scores.py
 ```
 
 `draft.py`, `update_scores.py` and `app.py` also respect the optional
-`DB_FILE`, `SCOREBOARD_FILE` and `PARTICIPANTS_FILE` environment variables which
-can be used to override the default file locations when troubleshooting.
+`DB_FILE`, `SCOREBOARD_FILE`, `PARTICIPANTS_FILE`, and `OPENING_DAY`
+environment variables which can be used to override defaults when
+troubleshooting or rolling into a new season.

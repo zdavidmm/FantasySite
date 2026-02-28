@@ -4,13 +4,46 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Fantasy Runs Challenge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Sora:wght@600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
-  <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
-  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+  <script>
+    tailwind = window.tailwind || {};
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            surface: {
+              950: '#05080d',
+              900: '#0a0f17',
+              800: '#111927',
+              700: '#182435'
+            },
+            accent: {
+              500: '#00c853',
+              400: '#44e47b',
+              300: '#86f2a8'
+            }
+          },
+          fontFamily: {
+            display: ['Sora', 'sans-serif'],
+            body: ['Manrope', 'sans-serif']
+          },
+          boxShadow: {
+            glow: '0 0 0 1px rgba(134, 242, 168, 0.2), 0 12px 42px rgba(0, 0, 0, 0.45)'
+          }
+        }
+      }
+    };
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@17/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js" crossorigin></script>
 </head>
-<body>
+<body class="min-h-screen bg-gradient-to-b from-surface-950 via-surface-900 to-surface-950 text-slate-100 font-body antialiased">
   <div id="root"></div>
-  <script type="text/babel" src="app.js"></script>
+  <script src="view-model.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
